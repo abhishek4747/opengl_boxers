@@ -20,6 +20,7 @@ string trim(const string& str, const string& whitespace = " \t"){
 }
 
 bool camSet = false;
+bool incAngle = false, decAngle = false;
 camera *cam = new camera();
 class node{
 private:
@@ -149,9 +150,18 @@ public:
 		for (size_t i = 0; i < this->children.size(); i++){
 			vector<node*> temp = this->children[i]->findBodyPart(part);
 			for (size_t j = 0; j < temp.size(); j++) h.push_back(temp[j]);
-	
-	}
+		}
 		return h;
+	}
+
+	void angleIncreaseTo(float ang){
+		if (this->angle<ang) this->angle += 1.f;
+		else incAngle = false;
+	}
+
+	void angleDecreaseTo(float ang){
+		if (this->angle>ang) this->angle -= 1.f;
+		else decAngle = false;
 	}
 
 	void print(const int tabs = 0){
@@ -164,10 +174,13 @@ public:
 };
 
 node* root;
-vector<node*> hands;
+vector<node*> upperarms;
+vector<node*> forearms;
 vector<node*> fingers;
-bool foldFingers = false;
-bool openFingers = false;
+vector<node*> fings;
+bool foldFingers = false, openFingers = false;
+bool foldFist = false, openFist = false;
+node* incArm,* decArm;
 bool keyStates[256];// = new bool[256];
 bool keySpecialStates[256]; // = new bool[256]; // Create an array of boolean values of length 256 (0-255) 
 bool movingUp = false; // Whether or not we are moving up or down  
@@ -253,8 +266,29 @@ void setRoot(){
 	root = node::read_node(filein);
 	//root->print();
 	filein.close();
-	hands = root->findBodyPart("upperarm");
+	upperarms = root->findBodyPart("upperarm");
+	forearms = root->findBodyPart("forearm");
 	fingers = root->findBodyPart("finger");
+}
+
+void makeFist(vector<node*>fings){
+	for (size_t i = 0; i < fings.size(); i++){
+		fings[i]->angle += 1.0f;
+		if (fings[i]->angle>120.0f){
+			fings[i]->angle = 120.0f;
+			foldFist = false;
+		}
+	}
+}
+
+void loseFist(vector<node*>fings){
+	for (size_t i = 0; i < fings.size(); i++){
+		fings[i]->angle -= 1.0f;
+		if (fings[i]->angle<0.0f){
+			fings[i]->angle = 0.0f;
+			openFist = false;
+		}
+	}
 }
 
 void keyOperations (void) {  
@@ -287,14 +321,14 @@ void keyOperations (void) {
 		float deg = 1.f;
 		float x = cam->eyex;
 		float z = cam->eyez;
-		cam->eyex = x*cos((deg/180.)*(22./7.)) - z*sin((deg/180.)*(22./7.));
-		cam->eyez = x*sin((deg/180.)*(22./7.)) + z*cos((deg/180.)*(22./7.));
+		cam->eyex = x*cos((deg/180.f)*(22.f/7.f)) - z*sin((deg/180.f)*(22.f/7.f));
+		cam->eyez = x*sin((deg/180.f)*(22.f/7.f)) + z*cos((deg/180.f)*(22.f/7.f));
 	}else if(keyStates['6']){
 		float deg = -1.f;
 		float x = cam->eyex;
 		float z = cam->eyez;
-		cam->eyex = x*cos((deg/180.)*(22./7.)) - z*sin((deg/180.)*(22./7.));
-		cam->eyez = x*sin((deg/180.)*(22./7.)) + z*cos((deg/180.)*(22./7.));
+		cam->eyex = x*cos((deg/180.f)*(22.f/7.f)) - z*sin((deg/180.f)*(22.f/7.f));
+		cam->eyez = x*sin((deg/180.f)*(22.f/7.f)) + z*cos((deg/180.f)*(22.f/7.f));
 	}
 	if(keyStates['8']){
 		cam->eyey += exp(cam->eyey/100.f)/100.f;
@@ -304,24 +338,48 @@ void keyOperations (void) {
 
 	if(keyStates['i']){
 		size_t h = 0;
-		if (hands.size()>h){
-			hands[h]->angle += 1.0f;
-			if (hands[h]->angle>360.0f)	hands[h]->angle = 0.0f;
+		if (upperarms.size()>h){
+			upperarms[h]->angle += 1.0f;
+			if (upperarms[h]->angle>360.0f)	upperarms[h]->angle = 0.0f;
 		}
 	} 
 	if(keyStates['o']){
 		size_t h = 1;
-		if (hands.size()>h){
-			hands[h]->angle += 1.0f;
-			if (hands[h]->angle>360.0f)	hands[h]->angle = 0.0f;
+		if (upperarms.size()>h){
+			upperarms[h]->angle += 1.0f;
+			if (upperarms[h]->angle>360.0f)	upperarms[h]->angle = 0.0f;
 		}
 	}
+	if (keyStates['p']){
+		keyStates['p'] = false;
+		size_t u = 0;
+		if (upperarms.size()>u) {
+			fings = upperarms[u]->findBodyPart("finger");
+		}
+
+		if (forearms.size()>u) {
+			incArm = forearms[u];
+			incAngle = true;
+		}
+
+		if (upperarms.size()>u){
+			decArm = upperarms[u];
+			decAngle = true;
+		}
+		if (fings.size()>0) foldFist = true;
+	}
+
+
+	if (foldFist) makeFist(fings);
+	if (incAngle) incArm->angleIncreaseTo(135.f);
+	if (decAngle) decArm->angleDecreaseTo(-45.f);
 
 	if (keyStates['f']) {
 		keyStates['f'] = false;
 		if (!openFingers)
 		foldFingers = !foldFingers;
 	}
+
 	if (foldFingers){
 		for (size_t i = 0; i < fingers.size(); i++){
 			fingers[i]->angle += 1.0f;
@@ -332,6 +390,7 @@ void keyOperations (void) {
 			}
 		}
 	}
+
 	if (openFingers){
 		for (size_t i = 0; i < fingers.size(); i++){
 			fingers[i]->angle -= 1.0f;
@@ -342,7 +401,6 @@ void keyOperations (void) {
 			}
 		}
 	}
-	
 } 
 
 void keySpecialOperations(void) {  
