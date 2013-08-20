@@ -66,7 +66,7 @@ public:
 				float s;
 				while(stream >> s) size_specs.push_back(s);
 			}else{
-				cout<<"File Format is not Ok!!";
+				cout<<"File Format is not Ok!! "<<name;
 				getchar();
 			}
 			
@@ -89,7 +89,6 @@ public:
 	}
 
 	void drawCylinder(float x, float y, float z, float radius, float height, int slices=32, int stacks=32){
-		glRotatef(this->angle, this->rx, this->ry, this->rz);
 		GLUquadricObj *quadObj = gluNewQuadric();
 		gluCylinder(quadObj, radius , radius, height, slices, stacks);
 		glRotatef(180, 1,0,0); 
@@ -98,16 +97,16 @@ public:
 		glTranslatef(0.0f, 0.0f, height); 
 		gluDisk(quadObj, 0.0f, radius, slices, 1); 
 		glTranslatef(0.0f, 0.0f, -height);
-		glRotatef(-this->angle, this->rx, this->ry, this->rz);
 	}
 
 	void draw(){
-		
 		if (this->name=="camera" || this->shape=="camera"){
 			if (!camSet) cam = new camera(this->tx, this->ty, this->tz, this->rx, this->ry, this->rz);
 			camSet = true;
 		}else{
+			glPushMatrix();
 			glTranslatef(this->tx,this->ty,this->tz);
+			glRotatef(this->angle, this->rx, this->ry, this->rz);
 			if(this->shape=="sphere"){
 				if (this->size_specs.size()){
 					if (this->name=="head") glColor4f(1.f,1.f,1.f,0.5f);
@@ -136,19 +135,34 @@ public:
 		for (size_t i = 0; i < this->children.size(); i++){
 			this->children[i]->draw();
 		}
-		glTranslatef(-this->tx, -this->ty, -this->tz);
+		if (!(this->name=="camera" || this->shape=="camera")){
+			glRotatef(-this->angle, this->rx, this->ry, this->rz);
+			glTranslatef(-this->tx, -this->ty, -this->tz);
+			glPopMatrix();
+		}
+	}
+
+	vector<node*> findHands(){
+		vector<node*> h;
+		if (this->name=="upperarm") h.push_back(this);
+		for (size_t i = 0; i < this->children.size(); i++){
+			vector<node*> temp = this->children[i]->findHands();
+			for (size_t j = 0; j < temp.size(); j++) h.push_back(temp[j]);
+		}
+		return h;
 	}
 
 	void print(const int tabs = 0){
 		node root = *this;
 		int t = tabs;
-		while (t--) cout<<"\t";
+		while (t--) cout<<"-- ";
 		cout<<root.name<<"-"<<root.shape<<"-"<<root.children.size()<<"-"<<root.tx<<"-"<<root.ty<<"-"<<root.tz<<"-"<<root.angle<<"-"<<root.rx<<"-"<<root.ry<<"-"<<root.rz<<endl;
 		for (size_t i = 0, len = root.children.size(); i < len; ++i) root.children[i]->print(tabs+1);
 	}
 };
 
 node* root;
+vector<node*> hands;
 bool keyStates[256];// = new bool[256];
 bool keySpecialStates[256]; // = new bool[256]; // Create an array of boolean values of length 256 (0-255) 
 bool movingUp = false; // Whether or not we are moving up or down  
@@ -232,21 +246,50 @@ void setRoot(){
 		exit(0);
 	}
 	root = node::read_node(filein);
-	root->print();
+	//root->print();
 	filein.close();
+	hands = root->findHands();
 }
 
 void keyOperations (void) {  
 	if (keyStates['q']|| keyStates['Q']){
 		exit(0);
-	}else if(keyStates['[']){
+	}
+	if(keyStates['[']){
 		cam->eyez += 0.1f;
 	}else if(keyStates[']']){
 		cam->eyez -= 0.1f;
-	}else if(keyStates['r'] || keyStates['R']){
+	} 
+	
+	if(keyStates['r'] || keyStates['R']){
 		if (keyStates['R']) camSet = false;
 		keyStates['r'] = keyStates['R'] = false;
 		setRoot();
+	}
+
+	if(keyStates['-']){
+		cam->eyex *= 1.01f;
+		cam->eyey *= 1.01f;
+		cam->eyez *= 1.01f;
+	}else if(keyStates['+']){
+		cam->eyex /= 1.01f;
+		cam->eyey /= 1.01f;
+		cam->eyez /= 1.01f;
+	}
+
+	if(keyStates['i']){
+		size_t h = 0;
+		if (hands.size()>h){
+			hands[h]->angle += 1.0f;
+			if (hands[h]->angle>360.0f)	hands[h]->angle = 0.0f;
+		}
+	} 
+	if(keyStates['o']){
+		size_t h = 1;
+		if (hands.size()>h){
+			hands[h]->angle += 1.0f;
+			if (hands[h]->angle>360.0f)	hands[h]->angle = 0.0f;
+		}
 	}
 } 
 
@@ -283,6 +326,8 @@ void display (void) {
 	keySpecialOperations();
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear (GL_COLOR_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
     //glEnable(GL_BLEND); //enable the blending
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //set the blend function
     glLoadIdentity();  
@@ -296,21 +341,22 @@ void display (void) {
 	glEnd();
     //cube();
 	root->draw();
+	glPopMatrix();
+	glFlush();
 	//GLUquadricObj *quadObj = gluNewQuadric();
 	//glRotatef(90.0f, 1.0f, 1.0f, 0.0f);
 	//gluCylinder(quadObj, 0.1f , 0.1f, 3.0f, 32, 32);
-    glutSwapBuffers();
+    //glutSwapBuffers();
     // angle ++;
 }
 
-int main (int argc, char **argv) {
-	cout<<"Jai bajrang bali!!"<<endl;
+int main (int argc, char **argv) {	
 	setRoot();
 	fill_n( keyStates, 256, false);
 	fill_n( keySpecialStates, 256, false);
 
 	glutInit(&argc, argv); // Initialize GLUT  
-	glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGBA); // Set up a basic display buffer (only single buffered for now)  
+	glutInitDisplayMode (GLUT_SINGLE | GLUT_RGBA); // Set up a basic display buffer (only single buffered for now)  
 	glutInitWindowSize (600, 600); // Set the width and height of the window  
 	glutInitWindowPosition (500, 50); // Set the position of the window  
 	glutCreateWindow ("Your first OpenGL Window"); // Set the title for the window  
