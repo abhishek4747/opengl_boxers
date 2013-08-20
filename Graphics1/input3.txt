@@ -1,0 +1,26 @@
+camera camera 1 5 5 5    0 0.0 0.0 0.0
+	torso cylinder 5 0 0 0    90 1.0 0.0 0.0    0.3 0.6
+		head sphere 0 0 0.3 0    0 0.0 0.0 0.0    0.3
+		thigh cylinder 1 0.2 -0.65 0    90 1 0 0    0.1 0.3
+			foreleg cylinder 1 0.0 -0.35 0    90 1 0 0    0.1 0.3
+				foot cylinder 0 0 -0.35 -0.1    0 0 0 0 0.1 0.3
+		thigh cylinder 1 -0.2 -0.65 0    90 1 0 0    0.1 0.3
+			foreleg cylinder 1 -0.0 -0.35 0    90 1 0 0    0.1 0.3
+				foot cylinder 0 0 -0.35 -0.1    0 0 0 0 0.1 0.3
+		upperarm cylinder 1 -0.45 0 0    90 1 0 0    0.1 0.3
+			forearm cylinder 1 -0.0 -0.35 0    90 1 0 0    0.1 0.3
+				palm cylinder 3 0 -0.4 -0.05     90 0 0 1 0.1 0.1
+					finger cylinder 0 0 -0 0.05    90 1 0 0 0.02 0.2
+					finger cylinder 0 0 -0 0.05    90 1 0.6 0 0.02 0.2
+					finger cylinder 0 0 -0 0.05    90 1 -0.6 0 0.02 0.2
+		upperarm cylinder 1 0.45 0 0    90 1 0 0    0.1 0.3
+			forearm cylinder 1 0 -0.35 0    90 1 0 0    0.1 0.3
+				palm cylinder 3 0 -0.4 -0.05     90 0 0 1 0.1 0.1
+					finger cylinder 0 0 -0 0.05    90 1 0 0 0.02 0.2
+					finger cylinder 0 0 -0 0.05    90 1 0.6 0 0.02 0.2
+					finger cylinder 0 0 -0 0.05    90 1 -0.6 0 0.02 0.2
+	torso cylinder 0 -3 -3 -3    45.4 0.0 0.0 0.0 0.3 0.7
+
+			head sphere 1 1 1 1 45 0.0 0.0 0.0 0.5
+				head sphere 1 1 1 1 45 0.0 0.0 0.0 0.5
+					head sphere 0 1 1 1 45 0.0 0.0 0.0 0.5

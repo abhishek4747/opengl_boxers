@@ -84,46 +84,59 @@ public:
 	}
 	
 	void drawSphere(float x, float y, float z, float radius, int slices=32, int stacks=32){
-		//glPushMatrix();
-		//glLoadIdentity();
-		glTranslatef(x,y,z);
-		glColor4f(0.0f, 0.3f, 0.5f, 0.6f);
 		glutSolidSphere(radius, slices, stacks);
 		//glutWireSphere(double radius, int slices, int stacks);  
 	}
 
 	void drawCylinder(float x, float y, float z, float radius, float height, int slices=32, int stacks=32){
-		//glLoadIdentity();
-		glTranslatef(x,y,z);
+		glRotatef(this->angle, this->rx, this->ry, this->rz);
 		GLUquadricObj *quadObj = gluNewQuadric();
-		//glRotatef(90.0f, 0.0f, 0.1f, 0.1f);
 		gluCylinder(quadObj, radius , radius, height, slices, stacks);
+		glRotatef(180, 1,0,0); 
+		gluDisk(quadObj, 0.0f, radius, slices, 1); 
+		glRotatef(180, 1,0,0); 
+		glTranslatef(0.0f, 0.0f, height); 
+		gluDisk(quadObj, 0.0f, radius, slices, 1); 
+		glTranslatef(0.0f, 0.0f, -height);
+		glRotatef(-this->angle, this->rx, this->ry, this->rz);
 	}
 
 	void draw(){
+		
 		if (this->name=="camera" || this->shape=="camera"){
 			if (!camSet) cam = new camera(this->tx, this->ty, this->tz, this->rx, this->ry, this->rz);
 			camSet = true;
-		}else if(this->shape=="sphere"){
-			if (this->size_specs.size()){
-				drawSphere(this->tx, this->ty, this->tz, this->size_specs[0]);
-			}else{
-				cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
-				getchar();
-				exit(0);
-			}
-		}else if(this->shape=="cylinder"){			
-			if (this->size_specs.size()>1){
-				drawCylinder(this->tx, this->ty, this->tz, this->size_specs[0], this->size_specs[1]);
-			}else{
-				cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
-				getchar();
-				exit(0);
+		}else{
+			glTranslatef(this->tx,this->ty,this->tz);
+			if(this->shape=="sphere"){
+				if (this->size_specs.size()){
+					if (this->name=="head") glColor4f(1.f,1.f,1.f,0.5f);
+					drawSphere(this->tx, this->ty, this->tz, this->size_specs[0]);
+				}else{
+					cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
+					getchar();
+					exit(0);
+				}
+			}else if(this->shape=="cylinder"){			
+				if (this->size_specs.size()>1){
+					if (this->name=="torso") glColor4f(0.f,0.f,1.f,0.5f);
+					if (this->name=="thigh" || this->name=="foreleg") glColor4f(1.f,1.f,0.f,0.5f);
+					if (this->name=="foot") glColor4f(.6f,.3f,.6f,.5f);
+					if (this->name=="upperarm" || this->name=="forearm") glColor4f(0.f,1.f,0.f,0.5f);
+					if ( this->name=="palm" ) glColor4f(1.f,.9f,3.f,1.f);
+					if (this->name=="finger") glColor4f(.2f,.2f,.9f,1.f);
+					drawCylinder(this->tx, this->ty, this->tz, this->size_specs[0], this->size_specs[1]);
+				}else{
+					cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
+					getchar();
+					exit(0);
+				}
 			}
 		}
 		for (size_t i = 0; i < this->children.size(); i++){
 			this->children[i]->draw();
 		}
+		glTranslatef(-this->tx, -this->ty, -this->tz);
 	}
 
 	void print(const int tabs = 0){
@@ -231,9 +244,9 @@ void keyOperations (void) {
 	}else if(keyStates[']']){
 		cam->eyez -= 0.1f;
 	}else if(keyStates['r'] || keyStates['R']){
+		if (keyStates['R']) camSet = false;
 		keyStates['r'] = keyStates['R'] = false;
 		setRoot();
-		camSet = false;
 	}
 } 
 
@@ -280,14 +293,14 @@ void display (void) {
 		glVertex3f(i, 0, 2.5); glVertex3f(i, 0, -2.5);
 		glVertex3f(2.5, 0, i); glVertex3f(-2.5, 0, i);
 	}
-	glLoadIdentity();  
+	glEnd();
     //cube();
 	root->draw();
 	//GLUquadricObj *quadObj = gluNewQuadric();
 	//glRotatef(90.0f, 1.0f, 1.0f, 0.0f);
 	//gluCylinder(quadObj, 0.1f , 0.1f, 3.0f, 32, 32);
     glutSwapBuffers();
-    angle ++;
+    // angle ++;
 }
 
 int main (int argc, char **argv) {
@@ -301,6 +314,7 @@ int main (int argc, char **argv) {
 	glutInitWindowSize (600, 600); // Set the width and height of the window  
 	glutInitWindowPosition (500, 50); // Set the position of the window  
 	glutCreateWindow ("Your first OpenGL Window"); // Set the title for the window  
+
 	glutDisplayFunc(display); // Tell GLUT to use the method "display" for rendering  
 	glutIdleFunc(display); // Tell GLUT to use the method "display" as our idle method as well  
 	glutReshapeFunc(reshape); // Tell GLUT to use the method "reshape" for reshaping  
