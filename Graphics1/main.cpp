@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include "camera.h"
+#include <math.h>
 #pragma comment(lib, "freeglut")
 using namespace std;
 
@@ -142,13 +143,14 @@ public:
 		}
 	}
 
-	vector<node*> findHands(){
+	vector<node*> findBodyPart(string part){
 		vector<node*> h;
-		if (this->name=="upperarm") h.push_back(this);
+		if (this->name==part) h.push_back(this);
 		for (size_t i = 0; i < this->children.size(); i++){
-			vector<node*> temp = this->children[i]->findHands();
+			vector<node*> temp = this->children[i]->findBodyPart(part);
 			for (size_t j = 0; j < temp.size(); j++) h.push_back(temp[j]);
-		}
+	
+	}
 		return h;
 	}
 
@@ -163,6 +165,9 @@ public:
 
 node* root;
 vector<node*> hands;
+vector<node*> fingers;
+bool foldFingers = false;
+bool openFingers = false;
 bool keyStates[256];// = new bool[256];
 bool keySpecialStates[256]; // = new bool[256]; // Create an array of boolean values of length 256 (0-255) 
 bool movingUp = false; // Whether or not we are moving up or down  
@@ -248,21 +253,22 @@ void setRoot(){
 	root = node::read_node(filein);
 	//root->print();
 	filein.close();
-	hands = root->findHands();
+	hands = root->findBodyPart("upperarm");
+	fingers = root->findBodyPart("finger");
 }
 
 void keyOperations (void) {  
 	if (keyStates['q']|| keyStates['Q']){
 		exit(0);
 	}
-	if(keyStates['[']){
+	/*if(keyStates['[']){
 		cam->eyez += 0.1f;
 	}else if(keyStates[']']){
 		cam->eyez -= 0.1f;
-	} 
+	} */
 	
-	if(keyStates['r'] || keyStates['R']){
-		if (keyStates['R']) camSet = false;
+	if(keyStates['r'] || keyStates['R'] || keyStates['5']){
+		if (keyStates['R'] || keyStates['5']) camSet = false;
 		keyStates['r'] = keyStates['R'] = false;
 		setRoot();
 	}
@@ -275,6 +281,25 @@ void keyOperations (void) {
 		cam->eyex /= 1.01f;
 		cam->eyey /= 1.01f;
 		cam->eyez /= 1.01f;
+	}
+
+	if(keyStates['4']){
+		float deg = 1.f;
+		float x = cam->eyex;
+		float z = cam->eyez;
+		cam->eyex = x*cos((deg/180.)*(22./7.)) - z*sin((deg/180.)*(22./7.));
+		cam->eyez = x*sin((deg/180.)*(22./7.)) + z*cos((deg/180.)*(22./7.));
+	}else if(keyStates['6']){
+		float deg = -1.f;
+		float x = cam->eyex;
+		float z = cam->eyez;
+		cam->eyex = x*cos((deg/180.)*(22./7.)) - z*sin((deg/180.)*(22./7.));
+		cam->eyez = x*sin((deg/180.)*(22./7.)) + z*cos((deg/180.)*(22./7.));
+	}
+	if(keyStates['8']){
+		cam->eyey += exp(cam->eyey/100.f)/100.f;
+	}else if (keyStates['2']){
+		cam->eyey -= exp(cam->eyey/100.f)/100.f;
 	}
 
 	if(keyStates['i']){
@@ -291,18 +316,45 @@ void keyOperations (void) {
 			if (hands[h]->angle>360.0f)	hands[h]->angle = 0.0f;
 		}
 	}
+
+	if (keyStates['f']) {
+		keyStates['f'] = false;
+		if (!openFingers)
+		foldFingers = !foldFingers;
+	}
+	if (foldFingers){
+		for (size_t i = 0; i < fingers.size(); i++){
+			fingers[i]->angle += 1.0f;
+			if (fingers[i]->angle>120.0f){
+				fingers[i]->angle = 120.0f;
+				foldFingers = false;
+				openFingers = true;
+			}
+		}
+	}
+	if (openFingers){
+		for (size_t i = 0; i < fingers.size(); i++){
+			fingers[i]->angle -= 1.0f;
+			if (fingers[i]->angle<0.0f){
+				fingers[i]->angle = 0.0f;
+				foldFingers = false;
+				openFingers = false;
+			}
+		}
+	}
+	
 } 
 
 void keySpecialOperations(void) {  
-	if (keySpecialStates[GLUT_KEY_LEFT]) { // If the left arrow key has been pressed  
-		cam->eyex -= 0.1f;
-	}else if (keySpecialStates[GLUT_KEY_RIGHT]) { // If the left arrow key has been pressed  
-		cam->eyex += 0.1f;
-	}else if (keySpecialStates[GLUT_KEY_UP]) { // If the left arrow key has been pressed  
-		cam->eyey += 0.1f;
-	}else if (keySpecialStates[GLUT_KEY_DOWN]) { // If the left arrow key has been pressed  
-		cam->eyey -= 0.1f;
-	}
+	//if (keySpecialStates[GLUT_KEY_LEFT]) { // If the left arrow key has been pressed  
+	//	cam->eyex -= 0.1f;
+	//}else if (keySpecialStates[GLUT_KEY_RIGHT]) { // If the left arrow key has been pressed  
+	//	cam->eyex += 0.1f;
+	//}else if (keySpecialStates[GLUT_KEY_UP]) { // If the left arrow key has been pressed  
+	//	cam->eyey += 0.1f;
+	//}else if (keySpecialStates[GLUT_KEY_DOWN]) { // If the left arrow key has been pressed  
+	//	cam->eyey -= 0.1f;
+	//}
 }
 
 void keyPressed (unsigned char key, int x, int y) {  
