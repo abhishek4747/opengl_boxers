@@ -8,6 +8,8 @@
 #include <sstream>
 #include "camera.h"
 #include <math.h>
+#include <Windows.h>
+#include <thread>
 #pragma comment(lib, "freeglut")
 using namespace std;
 
@@ -159,9 +161,41 @@ public:
 		else incAngle = false;
 	}
 
+	void static angleIncreaseToAsync(node* n, float ang, int ms = 2000 , float scale = 0.1f){
+		if (n->angle<ang){
+			float dist = (ang - n->angle)/scale;
+			int speed = (int) ms/dist;
+			while(n->angle<ang) {
+				n->angle += scale;
+				Sleep(speed);
+			}
+		}
+	}
+
 	void angleDecreaseTo(float ang){
 		if (this->angle>ang) this->angle -= 1.f;
 		else decAngle = false;
+	}
+	
+	void static makeFistAsync(vector<node*> fings){
+		size_t len = fings.size();
+		while (len>0 && fings[0]->angle<120.f) {
+			for (size_t i = 0; i < fings.size(); i++) {
+				fings[i]->angle += 1.0f;
+				Sleep(1);
+			}
+			
+		}
+	}
+	void static angleDecreaseToAsync(node* n, float ang, int ms = 2000 , float scale = 0.1f){
+		if (n->angle>ang){
+			float dist = (n->angle - ang)/scale;
+			int speed = (int) ms/dist;
+			while(n->angle>ang) {
+				n->angle -= scale;
+				Sleep(speed);
+			}
+		}
 	}
 
 	void print(const int tabs = 0){
@@ -367,6 +401,29 @@ void keyOperations (void) {
 			decAngle = true;
 		}
 		if (fings.size()>0) foldFist = true;
+	}
+
+	if (keyStates['l']){
+		keyStates['l'] = false;
+		size_t u = 0;
+		if (upperarms.size()>u){
+			fings = upperarms[u]->findBodyPart("finger");
+			if (fings.size()>u) {
+				thread t1(&node::makeFistAsync, fings);		
+				t1.detach();
+			}
+		}
+		
+		if (forearms.size()>u) {
+			thread t1(&node::angleIncreaseToAsync, forearms[u], 135.f, 2000, 0.1f);		
+			t1.detach();
+		}
+
+		if (upperarms.size()>u){
+			thread t1(&node::angleDecreaseToAsync, upperarms[u], -45.f, 2000, 0.1f);		
+			t1.detach();
+			//upperarms[u];
+		}
 	}
 
 
