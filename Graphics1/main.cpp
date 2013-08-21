@@ -11,6 +11,27 @@
 #include <math.h>
 #include "node.h"
 
+/** Pending Tasks
+  * 1. Make opponent face opponent
+  * 2. Make Eyes
+  * 3. Make Nose
+  * 4. Make a Smile and Angry face
+  * 5. Make Hair
+  * 6. Make a Hit
+  * 7. Color them appropriately, Resize them appropriately
+  * 8. Walk
+  * 9. Reset arm from any configuration
+  * 10. Write glTransformertyui
+  * 11. Write glRotate
+  * 12. Mouse Navigation
+  * 13. Write Shortcuts on screen
+  * 14. Create a boxing Arena and Maximize screen
+  * 15. Kick
+  * 16. Palm
+  * 17. Save State
+ */
+
+
 #pragma comment(lib, "freeglut")
 
 using namespace std;
@@ -137,7 +158,7 @@ void keyOperations (void) {
 		if (upperarms.size()>u){
 			fings = upperarms[u]->findBodyPart("finger");
 			if (fings.size()>u) {
-				thread t1(&node::makeFistAsync, fings);		
+				thread t1(&node::makeFistAsync, fings, true, 0, 800, 1.0f);		
 				t1.detach();
 			}
 		}
@@ -157,13 +178,61 @@ void keyOperations (void) {
 		}
 	}
 
+	if (keyStates['j']){
+		keyStates['j']=false;
+		size_t u = 1;
+		if (upperarms.size()>u){
+			fings = upperarms[u]->findBodyPart("finger");
+			if (fings.size()>u) {
+				thread t1(&node::makeFistAsync, fings, false, 0, 800, 1.0f);		
+				t1.detach();
+			}
+		}
+	}
+
+	if (keyStates[';']){
+		keyStates[';']=false;
+		size_t u = 0;
+		if (upperarms.size()>u){
+			fings = upperarms[u]->findBodyPart("finger");
+			if (fings.size()>u) {
+				thread t1(&node::makeFistAsync, fings, false, 0, 800, 1.0f);		
+				t1.detach();
+			}
+		}
+	}
+
+	if (keyStates['m']){
+		keyStates['m']=false;
+		size_t u = 1;
+		if (upperarms.size()>u){
+			fings = upperarms[u]->findBodyPart("finger");
+			if (fings.size()>u) {
+				thread t1(&node::makeFistAsync, fings, true, 0, 800, 1.0f);		
+				t1.detach();
+			}
+		}
+	}
+
+	if (keyStates['/']){
+		keyStates['/']=false;
+		size_t u = 0;
+		if (upperarms.size()>u){
+			fings = upperarms[u]->findBodyPart("finger");
+			if (fings.size()>u) {
+				thread t1(&node::makeFistAsync, fings, true, 0, 800, 1.0f);		
+				t1.detach();
+			}
+		}
+	}
+
 	if (keyStates['p']){
 		keyStates['p'] = false;
 		size_t u = 0;
 		if (upperarms.size()>u){
 			fings = upperarms[u]->findBodyPart("finger");
 			if (fings.size()>u) {
-				thread t1(&node::makeFistAsync, fings);		
+				thread t1(&node::makeFistAsync, fings, true, 0, 800, 1.0f);		
 				t1.detach();
 			}
 		}

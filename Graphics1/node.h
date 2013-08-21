@@ -153,14 +153,28 @@ public:
 		}
 	}
 
-	void static makeFistAsync(vector<node*> fings){
+	void static makeFistAsync(vector<node*> fings, bool close = true, int waittime = 0, int ms = 2000, float scale = 1.0f){
 		size_t len = fings.size();
-		while (len>0 && fings[0]->angle<120.f) {
-			for (size_t i = 0; i < fings.size(); i++) {
-				fings[i]->angle += 1.0f;
-				Sleep(1);
+		if (len){
+			if (close){
+				float dist = (120.f - fings[0]->angle)/scale;
+				int speed = (int) (ms/dist);
+				while (fings[0]->angle<120.f) {
+					for (size_t i = 0; i < fings.size(); i++) {
+						fings[i]->angle += scale;
+					}
+					Sleep(speed);
+				}
+			}else{
+				float dist = (fings[0]->angle- 0.f)/scale;
+				int speed = (int) (ms/dist);				
+				while (fings[0]->angle>0.f) {
+					for (size_t i = 0; i < fings.size(); i++) {
+						fings[i]->angle -= scale;
+					}
+					Sleep(speed);
+				}
 			}
-			
 		}
 	}
 	
