@@ -89,6 +89,19 @@ public:
 	}
 
 	void draw(){
+		if (this->name=="torso") glColor4f(0.f,0.f,1.f,0.5f);
+		if (this->name=="thigh" || this->name=="foreleg") glColor4f(1.f,1.f,0.f,0.5f);
+		if (this->name=="foot") glColor4f(.6f,.3f,.6f,.5f);
+		if (this->name=="upperarm" || this->name=="forearm") glColor4f(0.f,1.f,0.f,0.5f);
+		if (this->name=="palm" ) glColor4f(1.f,.9f,3.f,1.f);
+		if (this->name=="finger") glColor4f(.2f,.2f,.9f,1.f);
+		if (this->name=="head") glColor4f(1.f,1.f,1.f,0.5f);
+		if (this->name=="eye") glColor4f(.4f, .9f, .1f, 0.5f);
+		if (this->name=="pupil") glColor4f(0.f, 0.f, 0.f, 1.f);
+		if (this->name=="nose") glColor4f(1.f, 0.f, 0.f, 1.f);
+		if (this->name=="mouth") glColor4f(1.f, 0.f, 0.f, 1.f);
+
+
 		if (this->name=="camera" || this->shape=="camera"){
 			if (!camSet) cam = new camera(this->tx, this->ty, this->tz, this->rx, this->ry, this->rz);
 			camSet = true;
@@ -98,7 +111,6 @@ public:
 			glRotatef(this->angle, this->rx, this->ry, this->rz);
 			if(this->shape=="sphere"){
 				if (this->size_specs.size()){
-					if (this->name=="head") glColor4f(1.f,1.f,1.f,0.5f);
 					drawSphere(this->tx, this->ty, this->tz, this->size_specs[0]);
 				}else{
 					cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
@@ -107,12 +119,6 @@ public:
 				}
 			}else if(this->shape=="cylinder"){			
 				if (this->size_specs.size()>1){
-					if (this->name=="torso") glColor4f(0.f,0.f,1.f,0.5f);
-					if (this->name=="thigh" || this->name=="foreleg") glColor4f(1.f,1.f,0.f,0.5f);
-					if (this->name=="foot") glColor4f(.6f,.3f,.6f,.5f);
-					if (this->name=="upperarm" || this->name=="forearm") glColor4f(0.f,1.f,0.f,0.5f);
-					if (this->name=="palm" ) glColor4f(1.f,.9f,3.f,1.f);
-					if (this->name=="finger") glColor4f(.2f,.2f,.9f,1.f);
 					drawCylinder(this->tx, this->ty, this->tz, this->size_specs[0], this->size_specs[1]);
 				}else{
 					cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
@@ -157,9 +163,9 @@ public:
 		size_t len = fings.size();
 		if (len){
 			if (close){
-				float dist = (120.f - fings[0]->angle)/scale;
+				float dist = (90.f - fings[0]->angle)/scale;
 				int speed = (int) (ms/dist);
-				while (fings[0]->angle<120.f) {
+				while (fings[0]->angle<90.f) {
 					for (size_t i = 0; i < fings.size(); i++) {
 						fings[i]->angle += scale;
 					}
@@ -174,6 +180,41 @@ public:
 					}
 					Sleep(speed);
 				}
+			}
+		}
+	}
+
+	void static rotateWristAsync(node* wrist, bool down = true, bool left = true, int waittime = 0, int ms = 2000){
+		float scale = 1.f;
+		Sleep(waittime);
+		if (down && left){
+			float dist = (180.f - wrist->angle)/scale;
+			int speed = (int) (ms/dist);
+			while (wrist->angle<180.f) {
+					wrist->angle += scale;
+				Sleep(speed);
+			}
+		}else if(!down && left){
+			float dist = (wrist->angle- 0.f)/scale;
+			int speed = (int) (ms/dist);				
+			while (wrist->angle>0.f) {
+				wrist->angle -= scale;
+				Sleep(speed);
+			}
+		}else if (down && !left){
+			float dist = (wrist->angle + 180.0f)/scale;
+			int speed = (int) (ms/dist);
+			while (wrist->angle>-180.f) {
+					wrist->angle -= scale;
+				Sleep(speed);
+			}
+		}else{
+			cout<<"hreer"<<wrist->angle;
+			float dist = (0.f - wrist->angle)/scale;
+			int speed = (int) (ms/dist);				
+			while (wrist->angle<0.f) {
+				wrist->angle += scale;
+				Sleep(speed);
 			}
 		}
 	}

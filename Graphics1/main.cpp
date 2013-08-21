@@ -29,6 +29,9 @@
   * 15. Kick
   * 16. Palm
   * 17. Save State
+  * 18.
+  * 19.
+  * 20. Prevent threding collisions
  */
 
 
@@ -43,7 +46,10 @@ vector<node*> thighs;
 vector<node*> forelegs;
 vector<node*> fingers;
 vector<node*> fings;
+vector<node*> bots;
+vector<node*> wrists;
 
+size_t bot = 0;
 bool keyStates[256];// = new bool[256];
 bool keySpecialStates[256]; // = new bool[256]; // Create an array of boolean values of length 256 (0-255) 
 
@@ -58,6 +64,23 @@ void reshape (int width, int height) {
 	gluPerspective(60, (GLfloat)width / (GLfloat)height, 1.0, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes  
 	glMatrixMode(GL_MODELVIEW); // Switch back to the model view matrix, so that we can start drawing shapes correctly  
 }  
+void loadBodyParts(){
+	if (bots.size()>bot){
+		upperarms = bots[bot]->findBodyPart("upperarm");
+		forearms = bots[bot]->findBodyPart("forearm");
+		fingers = bots[bot]->findBodyPart("finger");
+		thighs = bots[bot]->findBodyPart("thigh");
+		forelegs = bots[bot]->findBodyPart("foreleg");
+		wrists = bots[bot]->findBodyPart("wristrotate");
+	}else{
+		upperarms = root->findBodyPart("upperarm");
+		forearms = root->findBodyPart("forearm");
+		fingers = root->findBodyPart("finger");
+		thighs = root->findBodyPart("thigh");
+		forelegs = root->findBodyPart("foreleg");
+		wrists = root->findBodyPart("wristrotate");
+	}
+}
 
 void setRoot(){
 	ifstream filein;
@@ -70,11 +93,65 @@ void setRoot(){
 	root = node::read_node(filein);
 	//root->print();
 	filein.close();
-	upperarms = root->findBodyPart("upperarm");
-	forearms = root->findBodyPart("forearm");
-	fingers = root->findBodyPart("finger");
-	thighs = root->findBodyPart("thigh");
-	forelegs = root->findBodyPart("foreleg");
+	bots = root->findBodyPart("body");
+	loadBodyParts();
+}
+
+void punch(size_t u){
+	if (upperarms.size()>u){
+		fings = upperarms[u]->findBodyPart("finger");
+		if (fings.size()>u) {
+			thread t1(&node::makeFistAsync, fings, true, 0, 800, 1.0f);		
+			t1.detach();
+		}
+	}
+
+	if (upperarms.size()>u){
+		thread t1(&node::angleDecreaseToAsync, upperarms[u], -45.f, 0, 1300,  0.5f);		
+		t1.detach();
+		thread t2(&node::angleIncreaseToAsync, upperarms[u], 85.f, 1500, 500, 0.5f);		
+		t2.detach();
+	}
+
+	if (forearms.size()>u) {
+		thread t1(&node::angleIncreaseToAsync, forearms[u], 135.f, 0, 1500,  0.5f);		
+		t1.detach();
+		thread t2(&node::angleDecreaseToAsync, forearms[u], 0.f, 1500, 500, 0.5f);		
+		t2.detach();
+	}
+
+	if (wrists.size()>u) {
+		bool left = u==0?true:false;
+		thread t1(&node::rotateWristAsync, wrists[u], true, left, 1500, 500);		
+		t1.detach();
+	}
+}
+
+void releasePunch(size_t u){
+	int releaseTime = 800;
+	if (upperarms.size()>u){
+		fings = upperarms[u]->findBodyPart("finger");
+		if (fings.size()>u) {
+			thread t1(&node::makeFistAsync, fings, false, 0, releaseTime, 1.0f);		
+			t1.detach();
+		}
+	}
+
+	if (upperarms.size()>u){
+		thread t1(&node::angleDecreaseToAsync, upperarms[u], 0.f, 0, releaseTime,  0.5f);		
+		t1.detach();
+	}
+
+	if (forearms.size()>u) {
+		thread t1(&node::angleIncreaseToAsync, forearms[u], 15.f, 0, releaseTime,  0.5f);		
+		t1.detach();
+	}
+
+	if (wrists.size()>u) {
+		bool left = u==0?true:false;
+		thread t1(&node::rotateWristAsync, wrists[u], false, left, 0, releaseTime);		
+		t1.detach();
+	}
 }
 
 void keyOperations (void) {  
@@ -94,37 +171,18 @@ void keyOperations (void) {
 	}
 
 	if(keyStates['-']){
-		cam->eyex *= 1.01f;
-		cam->eyey *= 1.01f;
-		cam->eyez *= 1.01f;
-	}else if(keyStates['+']){
-		cam->eyex /= 1.01f;
-		cam->eyey /= 1.01f;
-		cam->eyez /= 1.01f;
-	}
-
-	if(keyStates['4']){
-		float deg = 1.f;
-		float x = cam->eyex;
-		float z = cam->eyez;
-		cam->eyex = x*cos(degreeToRadian(deg)) - z*sin(degreeToRadian(deg));
-		cam->eyez = x*sin(degreeToRadian(deg)) + z*cos(degreeToRadian(deg));
-	}else if(keyStates['6']){
-		float deg = -1.f;
-		float x = cam->eyex;
-		float z = cam->eyez;
-		cam->eyex = x*cos(degreeToRadian(deg)) - z*sin(degreeToRadian(deg));
-		cam->eyez = x*sin(degreeToRadian(deg)) + z*cos(degreeToRadian(deg));
-	}
-	if(keyStates['8']){
 		cam->eyey += exp(cam->eyey/100.f)/100.f;
-	}else if (keyStates['2']){
+	}else if(keyStates['+']){
 		cam->eyey -= exp(cam->eyey/100.f)/100.f;
 	}
+
+
 	if (keyStates['1']) { 
-		cam->eyex -= 0.1f;
-	}else if (keyStates['3']) { 
-		cam->eyex += 0.1f;
+		bot = 0;
+		loadBodyParts();
+	}else if (keyStates['2']) { 
+		bot = 1;
+		loadBodyParts();
 	}
 
 	if(keyStates['o']){
@@ -149,33 +207,22 @@ void keyOperations (void) {
 
 	if (keyStates['s']){
 		keyStates['s'] = false;
-		startWalking = !startWalking;
-		
+		startWalking = !startWalking;	
+	}
+
+	if (keyStates['p']){
+		keyStates['p'] = false;
+		punch(0);
+	}else if (keyStates['l']){
+		keyStates['l'] = false;
+		releasePunch(0);
 	}
 	if (keyStates['u']){
 		keyStates['u'] = false;
-		size_t u = 1;
-		if (upperarms.size()>u){
-			fings = upperarms[u]->findBodyPart("finger");
-			if (fings.size()>u) {
-				thread t1(&node::makeFistAsync, fings, true, 0, 800, 1.0f);		
-				t1.detach();
-			}
-		}
-
-		if (upperarms.size()>u){
-			thread t1(&node::angleDecreaseToAsync, upperarms[u], -45.f, 0, 1500,  0.5f);		
-			t1.detach();
-			thread t2(&node::angleIncreaseToAsync, upperarms[u], 85.f, 1500, 500, 0.5f);		
-			t2.detach();
-		}
-
-		if (forearms.size()>u) {
-			thread t1(&node::angleIncreaseToAsync, forearms[u], 135.f, 0, 1500,  0.5f);		
-			t1.detach();
-			thread t2(&node::angleDecreaseToAsync, forearms[u], 0.f, 1500, 500, 0.5f);		
-			t2.detach();
-		}
+		punch(1);
+	}else if (keyStates['k']){
+		keyStates['k'] = false;
+		releasePunch(1);
 	}
 
 	if (keyStates['j']){
@@ -225,44 +272,30 @@ void keyOperations (void) {
 			}
 		}
 	}
-
-	if (keyStates['p']){
-		keyStates['p'] = false;
-		size_t u = 0;
-		if (upperarms.size()>u){
-			fings = upperarms[u]->findBodyPart("finger");
-			if (fings.size()>u) {
-				thread t1(&node::makeFistAsync, fings, true, 0, 800, 1.0f);		
-				t1.detach();
-			}
-		}
-
-		if (upperarms.size()>u){
-			thread t1(&node::angleDecreaseToAsync, upperarms[u], -45.f, 0, 1500,  0.5f);		
-			t1.detach();
-			thread t2(&node::angleIncreaseToAsync, upperarms[u], 85.f, 1500, 500, 0.5f);		
-			t2.detach();
-		}
-
-		if (forearms.size()>u) {
-			thread t1(&node::angleIncreaseToAsync, forearms[u], 135.f, 0, 1500,  0.5f);		
-			t1.detach();
-			thread t2(&node::angleDecreaseToAsync, forearms[u], 0.f, 1500, 500, 0.5f);		
-			t2.detach();
-		}
-	}
 } 
 
 void keySpecialOperations(void) {  
-	//if (keySpecialStates[GLUT_KEY_LEFT]) { // If the left arrow key has been pressed  
-	//	cam->eyex -= 0.1f;
-	//}else if (keySpecialStates[GLUT_KEY_RIGHT]) { // If the left arrow key has been pressed  
-	//	cam->eyex += 0.1f;
-	//}else if (keySpecialStates[GLUT_KEY_UP]) { // If the left arrow key has been pressed  
-	//	cam->eyey += 0.1f;
-	//}else if (keySpecialStates[GLUT_KEY_DOWN]) { // If the left arrow key has been pressed  
-	//	cam->eyey -= 0.1f;
-	//}
+	if (keySpecialStates[GLUT_KEY_LEFT]) { // If the left arrow key has been pressed  
+		float deg = 1.f;
+		float x = cam->eyex;
+		float z = cam->eyez;
+		cam->eyex = x*cos(degreeToRadian(deg)) - z*sin(degreeToRadian(deg));
+		cam->eyez = x*sin(degreeToRadian(deg)) + z*cos(degreeToRadian(deg));
+	}else if (keySpecialStates[GLUT_KEY_RIGHT]) { // If the left arrow key has been pressed  
+		float deg = -1.f;
+		float x = cam->eyex;
+		float z = cam->eyez;
+		cam->eyex = x*cos(degreeToRadian(deg)) - z*sin(degreeToRadian(deg));
+		cam->eyez = x*sin(degreeToRadian(deg)) + z*cos(degreeToRadian(deg));
+	}else if (keySpecialStates[GLUT_KEY_UP]) { // If the left arrow key has been pressed  
+		cam->eyex /= 1.01f;
+		cam->eyey /= 1.01f;
+		cam->eyez /= 1.01f;
+	}else if (keySpecialStates[GLUT_KEY_DOWN]) { // If the left arrow key has been pressed  
+		cam->eyex *= 1.01f;
+		cam->eyey *= 1.01f;
+		cam->eyez *= 1.01f;
+	}
 }
 
 void keyPressed (unsigned char key, int x, int y) {  
@@ -312,11 +345,13 @@ int main (int argc, char **argv) {
 
 	glutInit(&argc, argv); // Initialize GLUT  
 	glutInitDisplayMode (GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH); // Set up a basic display buffer (only single buffered for now)  
-	glutInitWindowSize (600, 690); // Set the width and height of the window  
-	glutInitWindowPosition (750, 0); // Set the position of the window  
+	glutInitWindowSize (1350, 690); // Set the width and height of the window  
+	glutInitWindowPosition (0, 0); // Set the position of the window  
 	glutCreateWindow ("Graphics Assignment-1 : Boxing match"); // Set the title for the window  
 	
 	glEnable(GL_DEPTH_TEST);
+	glShadeModel (GL_SMOOTH); 
+
 	glutDisplayFunc(display); // Tell GLUT to use the method "display" for rendering  
 	glutIdleFunc(display); // Tell GLUT to use the method "display" as our idle method as well  
 	glutReshapeFunc(reshape); // Tell GLUT to use the method "reshape" for reshaping  
