@@ -106,14 +106,14 @@ void keyOperations (void) {
 		cam->eyex += 0.1f;
 	}
 
-	if(keyStates['i']){
+	if(keyStates['o']){
 		size_t h = 0;
 		if (upperarms.size()>h){
 			upperarms[h]->angle += 1.0f;
 			if (upperarms[h]->angle>360.0f)	upperarms[h]->angle = 0.0f;
 		}
 	} 
-	if(keyStates['o']){
+	if(keyStates['i']){
 		size_t h = 1;
 		if (upperarms.size()>h){
 			upperarms[h]->angle += 1.0f;
@@ -131,7 +131,32 @@ void keyOperations (void) {
 		startWalking = !startWalking;
 		
 	}
-	
+	if (keyStates['u']){
+		keyStates['u'] = false;
+		size_t u = 1;
+		if (upperarms.size()>u){
+			fings = upperarms[u]->findBodyPart("finger");
+			if (fings.size()>u) {
+				thread t1(&node::makeFistAsync, fings);		
+				t1.detach();
+			}
+		}
+
+		if (upperarms.size()>u){
+			thread t1(&node::angleDecreaseToAsync, upperarms[u], -45.f, 0, 1500,  0.5f);		
+			t1.detach();
+			thread t2(&node::angleIncreaseToAsync, upperarms[u], 85.f, 1500, 500, 0.5f);		
+			t2.detach();
+		}
+
+		if (forearms.size()>u) {
+			thread t1(&node::angleIncreaseToAsync, forearms[u], 135.f, 0, 1500,  0.5f);		
+			t1.detach();
+			thread t2(&node::angleDecreaseToAsync, forearms[u], 0.f, 1500, 500, 0.5f);		
+			t2.detach();
+		}
+	}
+
 	if (keyStates['p']){
 		keyStates['p'] = false;
 		size_t u = 0;
@@ -191,7 +216,7 @@ void display (void) {
 	keyOperations();
 	keySpecialOperations();
     glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear (GL_COLOR_BUFFER_BIT);
+    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
     //glEnable(GL_BLEND); //enable the blending
@@ -217,11 +242,12 @@ int main (int argc, char **argv) {
 	fill_n( keySpecialStates, 256, false);
 
 	glutInit(&argc, argv); // Initialize GLUT  
-	glutInitDisplayMode (GLUT_SINGLE | GLUT_RGBA); // Set up a basic display buffer (only single buffered for now)  
+	glutInitDisplayMode (GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH); // Set up a basic display buffer (only single buffered for now)  
 	glutInitWindowSize (600, 690); // Set the width and height of the window  
 	glutInitWindowPosition (750, 0); // Set the position of the window  
 	glutCreateWindow ("Graphics Assignment-1 : Boxing match"); // Set the title for the window  
-
+	
+	glEnable(GL_DEPTH_TEST);
 	glutDisplayFunc(display); // Tell GLUT to use the method "display" for rendering  
 	glutIdleFunc(display); // Tell GLUT to use the method "display" as our idle method as well  
 	glutReshapeFunc(reshape); // Tell GLUT to use the method "reshape" for reshaping  

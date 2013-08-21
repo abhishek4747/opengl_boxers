@@ -164,9 +164,12 @@ public:
 		}
 	}
 	
-	void static angleDecreaseToAsync(node* n, float ang,  int waittime = 0, int ms = 2000 , float scale = 0.01f){
+	void static angleDecreaseToAsync(node* n, float ang, /*bool x, bool y, bool z,*/ int waittime = 0, int ms = 2000 , float scale = 0.01f){
 		Sleep(waittime);
 		if (n->angle>ang){
+			/*n->rx = x?1:0;
+			n->ry = y?1:0;
+			n->rz = z?1:0;*/
 			float dist = (n->angle - ang)/scale;
 			int speed = (int) (ms/dist);
 			while(n->angle>ang) {
