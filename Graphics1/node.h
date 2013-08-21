@@ -16,6 +16,7 @@ using namespace std;
 camera *cam = new camera();
 
 bool camSet = false;
+bool startWalking = false;
 
 class node{
 public:
@@ -140,8 +141,8 @@ public:
 		return h;
 	}
 
-	void static angleIncreaseToAsync(node* n, float ang, int ms = 2000 , int waittime = 0, float scale = 0.1f){
-		if (waittime>0) Sleep((int)(waittime/1000));
+	void static angleIncreaseToAsync(node* n, float ang, int waittime = 0, int ms = 2000 , float scale = 0.01f){
+		Sleep(waittime);
 		if (n->angle<ang){
 			float dist = (ang - n->angle)/scale;
 			int speed = (int) (ms/dist);
@@ -163,8 +164,8 @@ public:
 		}
 	}
 	
-	void static angleDecreaseToAsync(node* n, float ang, int ms = 2000 , int waittime = 0, float scale = 0.1f){
-		if (waittime>0) Sleep((int)(waittime/1000));
+	void static angleDecreaseToAsync(node* n, float ang,  int waittime = 0, int ms = 2000 , float scale = 0.01f){
+		Sleep(waittime);
 		if (n->angle>ang){
 			float dist = (n->angle - ang)/scale;
 			int speed = (int) (ms/dist);
@@ -174,6 +175,8 @@ public:
 			}
 		}
 	}
+
+	
 
 	void print(const int tabs = 0){
 		node root = *this;

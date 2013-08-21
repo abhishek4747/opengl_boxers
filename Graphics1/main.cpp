@@ -18,6 +18,8 @@ using namespace std;
 node* root;
 vector<node*> upperarms;
 vector<node*> forearms;
+vector<node*> thighs;
+vector<node*> forelegs;
 vector<node*> fingers;
 vector<node*> fings;
 
@@ -50,6 +52,8 @@ void setRoot(){
 	upperarms = root->findBodyPart("upperarm");
 	forearms = root->findBodyPart("forearm");
 	fingers = root->findBodyPart("finger");
+	thighs = root->findBodyPart("thigh");
+	forelegs = root->findBodyPart("foreleg");
 }
 
 void keyOperations (void) {  
@@ -121,6 +125,12 @@ void keyOperations (void) {
 		keyStates['h'] = false;
 		cout<<cam->eyex<<" "<<cam->eyey<<" "<<cam->eyez<<endl; 
 	}
+
+	if (keyStates['s']){
+		keyStates['s'] = false;
+		startWalking = !startWalking;
+		
+	}
 	
 	if (keyStates['p']){
 		keyStates['p'] = false;
@@ -132,18 +142,20 @@ void keyOperations (void) {
 				t1.detach();
 			}
 		}
-		
-		if (forearms.size()>u) {
-			thread t1(&node::angleIncreaseToAsync, forearms[u], 135.f, 2000, 0, 0.1f);		
-			t1.detach();
-		}
 
 		if (upperarms.size()>u){
-			thread t1(&node::angleDecreaseToAsync, upperarms[u], -45.f, 2000, 0, 0.1f);		
+			thread t1(&node::angleDecreaseToAsync, upperarms[u], -45.f, 0, 1500,  0.5f);		
 			t1.detach();
+			thread t2(&node::angleIncreaseToAsync, upperarms[u], 85.f, 1500, 500, 0.5f);		
+			t2.detach();
 		}
 
-
+		if (forearms.size()>u) {
+			thread t1(&node::angleIncreaseToAsync, forearms[u], 135.f, 0, 1500,  0.5f);		
+			t1.detach();
+			thread t2(&node::angleDecreaseToAsync, forearms[u], 0.f, 1500, 500, 0.5f);		
+			t2.detach();
+		}
 	}
 } 
 
