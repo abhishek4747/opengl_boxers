@@ -1,4 +1,4 @@
-camera camera 1 0 0 5    0 0 0 0
+camera camera 1 0 2 5    0 0 0 0
 	torso cylinder 5 0 0 1.0    90 1.0 0.0 0.0    0.3 0.6
 		head sphere 0 0 0 -0.3    0 0.0 0.0 0.0    0.3
 		thigh cylinder 1 0.15 -0 0.65    35 1 0 0    0.1 0.3
