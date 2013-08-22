@@ -37,6 +37,7 @@ bool movingUp = false; // Whether or not we are moving up or down
 float yLocation = 0.0f; // Keep track of our position on the y axis.
 float yRotationAngle = 0.0f; // The angle of rotation for our object  
 
+
 void reshape (int width, int height) {  
 	glViewport(0, 0, (GLsizei)width, (GLsizei)height); // Set our viewport to the size of our window  
 	glMatrixMode(GL_PROJECTION); // Switch to the projection matrix so that we can manipulate how our scene is viewed  
@@ -250,6 +251,10 @@ void keyOperations (void) {
 	if (keyStates['h']){
 		keyStates['h'] = false;
 		cout<<cam->eyex<<" "<<cam->eyey<<" "<<cam->eyez<<endl; 
+	}
+	if (keyStates['g']){
+		keyStates['g'] = false;
+		myTranslatef(3.f,4.f,5.f);
 	}
 
 	if (keyStates['s']){

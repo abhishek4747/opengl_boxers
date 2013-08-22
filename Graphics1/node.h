@@ -18,6 +18,56 @@ camera *cam = new camera();
 bool camSet = false;
 bool startWalking = false;
 
+void myTranslatef(float x, float y, float z){
+	//float mat[4][4] = {{1,0,0,x},{0,1,0,y},{0,0,1,z},{0,0,0,1}};
+	GLfloat mat[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{x,y,z,1}};
+	glMultMatrixf(&mat[0][0]);
+}
+float cpx(float x1,float x2,float x3,float y1,float y2,float y3){
+	return x2*y3-y2*x3;
+}
+float cpy(float x1,float x2,float x3,float y1,float y2,float y3){
+	return x1*y3-y1*x3;
+}
+float cpz(float x1,float x2,float x3,float y1,float y2,float y3){
+	return x1*y2-y1*x2;
+}
+float mag(float x, float y, float z){
+	return sqrt(x*x+y*y+z*z);
+}
+void myRotatef(float angle, float x, float y, float z){
+	//glRotatef(angle, x, y, z);
+	float PI = 3.14f;
+	float l= sin(angle * PI / 180.0);
+	float k= cos(angle* PI / 180.0);
+	float r[16]={x*x*(1-k)+k, y*x*(1-k)+z*l, x*z*(1-k)-y*l, 0,
+		y*x*(1-k)-z*l, y*y*(1-k)+k, y*z*(1-k)+x*l, 0,
+		x*z*(1-k)+y*l, y*z*(1-k)-x*l, z*z*(1-k)+k, 0,
+		0, 0, 0, 1};
+	glMultMatrixf(&r[0]);
+	/*
+	float r1,r2,r3;
+	if (x==1 && y==1 && z==1){
+		r1 = 0;
+		r2 = r3 = 1;
+	}else{
+		r1 = r2 = r3= 1;
+	}
+	float v3x=x, float v3y=y, float v3z=z;
+	float v2x, v2y, v2z;
+	v2x = cpx(r1,r2,r3,v2x,v2y,v2z);
+	v2y = cpy(r1,r2,r3,v2x,v2y,v2z);
+	v2z = cpz(r1,r2,r3,v2x,v2y,v2z);
+	v2x /= mag(v2x,v2y,v2z);
+	v2y /= mag(v2x,v2y,v2z);
+	v2z /= mag(v2x,v2y,v2z);
+	
+	v3x /= mag(v3x,v3y,v3z);
+	v3y /= mag(v3x,v3y,v3z);
+	v3z /= mag(v3x,v3y,v3z);
+*/
+}
+
 class node{
 public:
 	string name, shape;
@@ -81,12 +131,12 @@ public:
 		gluCylinder(quadObj, radius , radius, height, slices, stacks);
 		
 		// For covering top and bottom
-		glRotatef(180, 1,0,0); 
+		myRotatef(180, 1,0,0); 
 		gluDisk(quadObj, 0.0f, radius, slices, 1); 
-		glRotatef(180, 1,0,0); 
-		glTranslatef(0.0f, 0.0f, height); 
+		myRotatef(180, 1,0,0); 
+		myTranslatef(0.0f, 0.0f, height); 
 		gluDisk(quadObj, 0.0f, radius, slices, 1); 
-		glTranslatef(0.0f, 0.0f, -height);
+		myTranslatef(0.0f, 0.0f, -height);
 	}
 	
 	void drawCube(float x, float y, float z, float width, float height, float depth,int slices=32, int stacks=32){
@@ -120,8 +170,8 @@ public:
 			camSet = true;
 		}else{
 			glPushMatrix();
-			glTranslatef(this->tx,this->ty,this->tz);
-			glRotatef(this->angle, this->rx, this->ry, this->rz);
+			myTranslatef(this->tx,this->ty,this->tz);
+			myRotatef(this->angle, this->rx, this->ry, this->rz);
 			if(this->shape=="sphere"){
 				if (this->size_specs.size()){
 					drawSphere(this->size_specs[0]);
@@ -153,8 +203,8 @@ public:
 			this->children[i]->draw();
 		}
 		if (!(this->name=="camera" || this->shape=="camera")){
-			glRotatef(-this->angle, this->rx, this->ry, this->rz);
-			glTranslatef(-this->tx, -this->ty, -this->tz);
+			myRotatef(-this->angle, this->rx, this->ry, this->rz);
+			myTranslatef(-this->tx, -this->ty, -this->tz);
 			glPopMatrix();
 		}
 	}
