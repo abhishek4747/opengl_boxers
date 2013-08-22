@@ -11,30 +11,6 @@
 #include <math.h>
 #include "node.h"
 
-/** Pending Tasks
-  Done * 1. Make opponent face opponent
-  Done * 2. Make Eyes
-  Done * 3. Make Nose
-  Done * 5. Make Hair
-  Done * 6. Make a Hit on the face
-  Done * 7. Color them appropriately, Resize them appropriately
-  Done * 14. Create a boxing Arena and Maximize screen
-  Done * 16. Palm
-  Done * 17. Save State
-  Done * 19. Translate to opponent
-  Done * 20. Prevent threding collisions  
-  Not Doing * 4. Make a Smile and Angry face
-  Not Doing * 12. Mouse Navigation
-  Not Doing * 13. Write Shortcuts on screen
-  Not Doing * 18. Improve Punch
-  Not Doing * 15. Kick
-  * 8. Walk
-  * 9. Reset arm from any configuration and back to same position
-  * 10. Write glTransform
-  * 11. Write glRotate
- */
-
-
 #pragma comment(lib, "freeglut")
 
 using namespace std;
