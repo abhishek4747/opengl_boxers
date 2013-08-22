@@ -12,26 +12,26 @@
 #include "node.h"
 
 /** Pending Tasks
-  * 1. Make opponent face opponent
-  * 2. Make Eyes
-  * 3. Make Nose
-  * 4. Make a Smile and Angry face
+  Done * 1. Make opponent face opponent
+  Done * 2. Make Eyes
+  Done * 3. Make Nose
+  Not Doing * 4. Make a Smile and Angry face
   * 5. Make Hair
   * 6. Make a Hit
-  * 7. Color them appropriately, Resize them appropriately
+  Done * 7. Color them appropriately, Resize them appropriately
   * 8. Walk
   * 9. Reset arm from any configuration
   * 10. Write glTransformertyui
   * 11. Write glRotate
-  * 12. Mouse Navigation
-  * 13. Write Shortcuts on screen
+  Not Doing * 12. Mouse Navigation
+  Not Doing * 13. Write Shortcuts on screen
   * 14. Create a boxing Arena and Maximize screen
   * 15. Kick
-  * 16. Palm
+  Done * 16. Palm
   * 17. Save State
-  * 18.
-  * 19.
-  * 20. Prevent threding collisions
+  * 18. Improve Punch
+  * 19. 
+  Done * 20. Prevent threding collisions
  */
 
 
@@ -122,7 +122,7 @@ void punch(size_t u){
 
 	if (wrists.size()>u) {
 		bool left = u==0?true:false;
-		thread t1(&node::rotateWristAsync, wrists[u], true, left, 1500, 500);		
+		thread t1(&node::rotateWristAsync, wrists[u], true, left, 1500, 300);		
 		t1.detach();
 	}
 }

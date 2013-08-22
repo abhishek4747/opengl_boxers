@@ -87,6 +87,19 @@ public:
 		gluDisk(quadObj, 0.0f, radius, slices, 1); 
 		glTranslatef(0.0f, 0.0f, -height);
 	}
+	
+	void drawCube(float x, float y, float z, float radius, float height, float depth,int slices=32, int stacks=32){
+		GLUquadricObj *quadObj = gluNewQuadric();
+		gluCylinder(quadObj, radius , radius, height, slices, stacks);
+		
+		// For covering top and bottom
+		glRotatef(180, 1,0,0); 
+		gluDisk(quadObj, 0.0f, radius, slices, 1); 
+		glRotatef(180, 1,0,0); 
+		glTranslatef(0.0f, 0.0f, height); 
+		gluDisk(quadObj, 0.0f, radius, slices, 1); 
+		glTranslatef(0.0f, 0.0f, -height);
+	}
 
 	void draw(){
 		if (this->name=="torso") glColor4f(0.f,0.f,1.f,0.5f);
@@ -120,6 +133,15 @@ public:
 			}else if(this->shape=="cylinder"){			
 				if (this->size_specs.size()>1){
 					drawCylinder(this->tx, this->ty, this->tz, this->size_specs[0], this->size_specs[1]);
+				}else{
+					cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
+					getchar();
+					exit(0);
+				}
+			}
+			else if(this->shape=="cube"){			
+				if (this->size_specs.size()>1){
+					drawCube(this->tx, this->ty, this->tz, this->size_specs[0], this->size_specs[1], this->size_specs[2]);
 				}else{
 					cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
 					getchar();
