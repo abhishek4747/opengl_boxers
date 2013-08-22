@@ -15,23 +15,23 @@
   Done * 1. Make opponent face opponent
   Done * 2. Make Eyes
   Done * 3. Make Nose
-  Not Doing * 4. Make a Smile and Angry face
-  * 5. Make Hair
-  * 6. Make a Hit
+  Done * 5. Make Hair
   Done * 7. Color them appropriately, Resize them appropriately
-  * 8. Walk
-  * 9. Reset arm from any configuration
-  * 10. Write glTransformertyui
-  * 11. Write glRotate
+  Done * 14. Create a boxing Arena and Maximize screen
+  Done * 16. Palm
+  Done * 17. Save State
+  Done * 20. Prevent threding collisions
+  Not Doing * 4. Make a Smile and Angry face
   Not Doing * 12. Mouse Navigation
   Not Doing * 13. Write Shortcuts on screen
-  * 14. Create a boxing Arena and Maximize screen
+  * 6. Make a Hit
+  * 8. Walk
+  * 9. Reset arm from any configuration and back to same position
+  * 10. Write glTransformertyui
+  * 11. Write glRotate
   * 15. Kick
-  Done * 16. Palm
-  * 17. Save State
   * 18. Improve Punch
-  * 19. 
-  Done * 20. Prevent threding collisions
+  * 19. Translate to opponent 
  */
 
 
@@ -52,7 +52,9 @@ vector<node*> wrists;
 size_t bot = 0;
 bool keyStates[256];// = new bool[256];
 bool keySpecialStates[256]; // = new bool[256]; // Create an array of boolean values of length 256 (0-255) 
+bool SHIFT = false, ALT = false, CTRL = false;
 
+bool file_type = true;
 bool movingUp = false; // Whether or not we are moving up or down  
 float yLocation = 0.0f; // Keep track of our position on the y axis.
 float yRotationAngle = 0.0f; // The angle of rotation for our object  
@@ -61,7 +63,7 @@ void reshape (int width, int height) {
 	glViewport(0, 0, (GLsizei)width, (GLsizei)height); // Set our viewport to the size of our window  
 	glMatrixMode(GL_PROJECTION); // Switch to the projection matrix so that we can manipulate how our scene is viewed  
 	glLoadIdentity(); // Reset the projection matrix to the identity matrix so that we don't get any artifacts (cleaning up)  
-	gluPerspective(60, (GLfloat)width / (GLfloat)height, 1.0, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes  
+	gluPerspective(60, (GLfloat)width / (GLfloat)height, .1, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes  
 	glMatrixMode(GL_MODELVIEW); // Switch back to the model view matrix, so that we can start drawing shapes correctly  
 }  
 void loadBodyParts(){
@@ -84,17 +86,29 @@ void loadBodyParts(){
 
 void setRoot(){
 	ifstream filein;
-	filein.open("input2.txt");
+	if (file_type) filein.open("node.txt");
+	else filein.open("saved_state.txt");
 	if (!filein.good()){
 		cout<<"\nFile not found!!";
 		getchar();
 		exit(0);
+	}else if(file_type){
+		cout<<"node.txt loaded"<<endl;
+	}else{
+		cout<<"saved_state.txt loaded"<<endl;
 	}
 	root = node::read_node(filein);
 	//root->print();
 	filein.close();
 	bots = root->findBodyPart("body");
 	loadBodyParts();
+}
+
+void saveState(){
+	ofstream fileout;
+	fileout.open("saved_state.txt", fstream::out);
+	root->writeNode(fileout,0);
+	fileout.close();
 }
 
 void punch(size_t u){
@@ -123,6 +137,11 @@ void punch(size_t u){
 	if (wrists.size()>u) {
 		bool left = u==0?true:false;
 		thread t1(&node::rotateWristAsync, wrists[u], true, left, 1500, 300);		
+		t1.detach();
+	}
+	if (bots.size()>bot) {
+		int nextbot = (bot+1)%(bots.size());	
+		thread t1(&node::translateBotAsync, bots[bot], bots[nextbot], 1500, 300, 0.01f);		
 		t1.detach();
 	}
 }
@@ -155,7 +174,7 @@ void releasePunch(size_t u){
 }
 
 void keyOperations (void) {  
-	if (keyStates['q']|| keyStates['Q']){
+	if (keyStates['q'] || keyStates['Q'] || keyStates[27]){
 		exit(0);
 	}
 	if(keyStates['0']){
@@ -164,12 +183,6 @@ void keyOperations (void) {
 		cam->eyez -= 0.1f;
 	}
 	
-	if(keyStates['r'] || keyStates['R'] || keyStates['5']){
-		if (keyStates['R'] || keyStates['5']) camSet = false;
-		keyStates['r'] = keyStates['R'] = false;
-		setRoot();
-	}
-
 	if(keyStates['-']){
 		cam->eyey += exp(cam->eyey/100.f)/100.f;
 	}else if(keyStates['+']){
@@ -281,25 +294,63 @@ void keySpecialOperations(void) {
 		float z = cam->eyez;
 		cam->eyex = x*cos(degreeToRadian(deg)) - z*sin(degreeToRadian(deg));
 		cam->eyez = x*sin(degreeToRadian(deg)) + z*cos(degreeToRadian(deg));
-	}else if (keySpecialStates[GLUT_KEY_RIGHT]) { // If the left arrow key has been pressed  
+	}
+	if (keySpecialStates[GLUT_KEY_RIGHT]) { // If the left arrow key has been pressed  
 		float deg = -1.f;
 		float x = cam->eyex;
 		float z = cam->eyez;
 		cam->eyex = x*cos(degreeToRadian(deg)) - z*sin(degreeToRadian(deg));
 		cam->eyez = x*sin(degreeToRadian(deg)) + z*cos(degreeToRadian(deg));
-	}else if (keySpecialStates[GLUT_KEY_UP]) { // If the left arrow key has been pressed  
+	}
+	if (keySpecialStates[GLUT_KEY_UP]) { // If the left arrow key has been pressed  
 		cam->eyex /= 1.01f;
 		cam->eyey /= 1.01f;
 		cam->eyez /= 1.01f;
-	}else if (keySpecialStates[GLUT_KEY_DOWN]) { // If the left arrow key has been pressed  
+	}
+	if (keySpecialStates[GLUT_KEY_DOWN]) { // If the left arrow key has been pressed  
 		cam->eyex *= 1.01f;
 		cam->eyey *= 1.01f;
 		cam->eyez *= 1.01f;
+	}
+
+	if (keySpecialStates[GLUT_KEY_F5] || keySpecialStates[GLUT_KEY_F6]){
+		if (keySpecialStates[GLUT_KEY_F6]){
+			camSet = false;
+			keySpecialStates[GLUT_KEY_F6] = false;
+		}
+		keySpecialStates[GLUT_KEY_F5] = false;
+		setRoot();
+	}
+
+	if (keySpecialStates[GLUT_KEY_F7]){
+		keySpecialStates[GLUT_KEY_F7] = false;
+		saveState();
+	}else if (keySpecialStates[GLUT_KEY_F8]){
+		keySpecialStates[GLUT_KEY_F8] = false;
+		file_type = !file_type;
+		setRoot();
 	}
 }
 
 void keyPressed (unsigned char key, int x, int y) {  
 	keyStates[key] = true; // Set the state of the current key to pressed 
+	if (glutGetModifiers() & GLUT_ACTIVE_SHIFT){
+		cout<<"SHIFT DOWN";
+		SHIFT = true;
+	}else {
+		cout<<"SHIFT UP";
+		SHIFT = false;
+	}
+	if (glutGetModifiers() & GLUT_ACTIVE_CTRL){
+		CTRL = true;
+	}else {
+		CTRL = false;
+	}
+	if (glutGetModifiers() & GLUT_ACTIVE_ALT){
+		ALT = true;
+	}else {
+		ALT = false;
+	}
 }  
 
 void keyUp (unsigned char key, int x, int y) {  
@@ -322,7 +373,7 @@ void display (void) {
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
     //glEnable(GL_BLEND); //enable the blending
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //set the blend function
+    //g5lBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //set the blend function
     glLoadIdentity();  
 	gluLookAt (cam->eyex, cam->eyey, cam->eyez, cam->centerx, cam->centery, cam->centerz, cam->upx, cam->upy, cam->upz);
 	// A white colored mesh 

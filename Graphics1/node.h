@@ -70,12 +70,13 @@ public:
 		}
 	}
 	
-	void drawSphere(float x, float y, float z, float radius, int slices=32, int stacks=32){
+	void drawSphere(float radius, int slices=32, int stacks=32){
 		glutSolidSphere(radius, slices, stacks);
 		//glutWireSphere(double radius, int slices, int stacks);  
 	}
 
-	void drawCylinder(float x, float y, float z, float radius, float height, int slices=32, int stacks=32){
+
+	void drawCylinder(float radius, float height, int slices=32, int stacks=32){
 		GLUquadricObj *quadObj = gluNewQuadric();
 		gluCylinder(quadObj, radius , radius, height, slices, stacks);
 		
@@ -88,17 +89,13 @@ public:
 		glTranslatef(0.0f, 0.0f, -height);
 	}
 	
-	void drawCube(float x, float y, float z, float radius, float height, float depth,int slices=32, int stacks=32){
-		GLUquadricObj *quadObj = gluNewQuadric();
-		gluCylinder(quadObj, radius , radius, height, slices, stacks);
-		
-		// For covering top and bottom
-		glRotatef(180, 1,0,0); 
-		gluDisk(quadObj, 0.0f, radius, slices, 1); 
-		glRotatef(180, 1,0,0); 
-		glTranslatef(0.0f, 0.0f, height); 
-		gluDisk(quadObj, 0.0f, radius, slices, 1); 
-		glTranslatef(0.0f, 0.0f, -height);
+	void drawCube(float x, float y, float z, float width, float height, float depth,int slices=32, int stacks=32){
+		glBegin(GL_QUADS);
+		  glVertex3f( width/2.f, 0.0f, -height/2.f);
+		  glVertex3f(-width/2.f, 0.0f, -height/2.f);
+		  glVertex3f(-width/2.f, 0.0f,  height/2.f);
+		  glVertex3f( width/2.f, 0.0f,  height/2.f);
+	   glEnd();  
 	}
 
 	void draw(){
@@ -109,10 +106,13 @@ public:
 		if (this->name=="palm" ) glColor4f(1.f,.9f,3.f,1.f);
 		if (this->name=="finger") glColor4f(.2f,.2f,.9f,1.f);
 		if (this->name=="head") glColor4f(1.f,1.f,1.f,0.5f);
+		if (this->name=="hair") glColor4f(.6f,.1f,.1f,0.5f);
 		if (this->name=="eye") glColor4f(.4f, .9f, .1f, 0.5f);
 		if (this->name=="pupil") glColor4f(0.f, 0.f, 0.f, 1.f);
-		if (this->name=="nose") glColor4f(1.f, 0.f, 0.f, 1.f);
-		if (this->name=="mouth") glColor4f(1.f, 0.f, 0.f, 1.f);
+		if (this->name=="mouth" || this->name=="ear" || this->name=="nose") glColor4f(1.f, 0.f, 0.f, 1.f);
+		if (this->name=="ring") glColor4f(.05f, .70f, .95f, 1.f); // White
+		if (this->name=="rop") glColor4f(0.5f, 0.8f, 0.f, 1.f); // Green Yellow
+		if (this->name=="pol") glColor4f(1.f, 0.5f, 0.f, 1.f); // Orange
 
 
 		if (this->name=="camera" || this->shape=="camera"){
@@ -124,7 +124,7 @@ public:
 			glRotatef(this->angle, this->rx, this->ry, this->rz);
 			if(this->shape=="sphere"){
 				if (this->size_specs.size()){
-					drawSphere(this->tx, this->ty, this->tz, this->size_specs[0]);
+					drawSphere(this->size_specs[0]);
 				}else{
 					cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
 					getchar();
@@ -132,7 +132,7 @@ public:
 				}
 			}else if(this->shape=="cylinder"){			
 				if (this->size_specs.size()>1){
-					drawCylinder(this->tx, this->ty, this->tz, this->size_specs[0], this->size_specs[1]);
+					drawCylinder(this->size_specs[0], this->size_specs[1]);
 				}else{
 					cout<<"size specs of the "<<this->shape<<" "<<this->name<<" not available!!"<< endl;
 					getchar();
@@ -231,7 +231,6 @@ public:
 				Sleep(speed);
 			}
 		}else{
-			cout<<"hreer"<<wrist->angle;
 			float dist = (0.f - wrist->angle)/scale;
 			int speed = (int) (ms/dist);				
 			while (wrist->angle<0.f) {
@@ -256,6 +255,33 @@ public:
 		}
 	}
 
+	void static translateBotAsync(node *mybot, node *nextbot, int waittime = 0, int ms = 2000, float scale = 0.01f){
+		Sleep(waittime);
+		float mbx = mybot->tx, mby = mybot->ty, mbz = mbz = mybot->tz;
+		float nbx = nextbot->tx, nby = nextbot->ty, nbz = nextbot->tz;
+		float offx = 0.f, 
+			offy = 0.f, 
+			offz = 1.f;
+		int t = (int)(1.f/scale);
+		int speed = (int)(ms/t);
+		while(t--){
+			mybot->tx -= scale*mbx;
+			mybot->ty -= scale*mby;
+			mybot->tz -= scale*mbz;
+			mybot->tx += scale*nbx;
+			mybot->ty += scale*nby;
+			mybot->tz += scale*nbz;
+			if (mbx>0) mybot->tx += scale*offx;
+			else mybot->tx -= scale*offx;
+			if (mby>0) mybot->ty += scale*offy;
+			else mybot->ty -= scale*offy;
+			if (mbz>0) mybot->tz += scale*offz;
+			else mybot->tz -= scale*offz;
+
+			Sleep(speed);
+		}
+	}
+
 	
 
 	void print(const int tabs = 0){
@@ -264,5 +290,18 @@ public:
 		while (t--) cout<<"-- ";
 		cout<<root.name<<"-"<<root.shape<<"-"<<root.children.size()<<"-"<<root.tx<<"-"<<root.ty<<"-"<<root.tz<<"-"<<root.angle<<"-"<<root.rx<<"-"<<root.ry<<"-"<<root.rz<<endl;
 		for (size_t i = 0, len = root.children.size(); i < len; ++i) root.children[i]->print(tabs+1);
+	}
+
+	void writeNode(ofstream &fileout, const int tabs = 0){
+		node root = *this;
+		int t = tabs;
+		while (t--) fileout<<"\t";
+		fileout<<root.name<<" "<<root.shape<<" "<<root.children.size()<<" "<<root.tx<<" "<<root.ty<<" "<<root.tz
+			<<" "<<root.angle<<" "<<root.rx<<" "<<root.ry<<" "<<root.rz;
+		for (size_t i = 0; i < root.size_specs.size(); i++){
+			fileout<<" "<<root.size_specs[i];
+		}
+		fileout<<endl;
+		for (size_t i = 0, len = root.children.size(); i < len; ++i) root.children[i]->writeNode(fileout, tabs+1);
 	}
 };
