@@ -16,22 +16,22 @@
   Done * 2. Make Eyes
   Done * 3. Make Nose
   Done * 5. Make Hair
+  Done * 6. Make a Hit on the face
   Done * 7. Color them appropriately, Resize them appropriately
   Done * 14. Create a boxing Arena and Maximize screen
   Done * 16. Palm
   Done * 17. Save State
-  Done * 20. Prevent threding collisions
+  Done * 19. Translate to opponent
+  Done * 20. Prevent threding collisions  
   Not Doing * 4. Make a Smile and Angry face
   Not Doing * 12. Mouse Navigation
   Not Doing * 13. Write Shortcuts on screen
-  * 6. Make a Hit
+  Not Doing * 18. Improve Punch
+  Not Doing * 15. Kick
   * 8. Walk
   * 9. Reset arm from any configuration and back to same position
-  * 10. Write glTransformertyui
+  * 10. Write glTransform
   * 11. Write glRotate
-  * 15. Kick
-  * 18. Improve Punch
-  * 19. Translate to opponent 
  */
 
 
@@ -48,6 +48,8 @@ vector<node*> fingers;
 vector<node*> fings;
 vector<node*> bots;
 vector<node*> wrists;
+vector<node*> elbows;
+vector<node*> necks;
 
 size_t bot = 0;
 bool keyStates[256];// = new bool[256];
@@ -69,18 +71,22 @@ void reshape (int width, int height) {
 void loadBodyParts(){
 	if (bots.size()>bot){
 		upperarms = bots[bot]->findBodyPart("upperarm");
-		forearms = bots[bot]->findBodyPart("forearm");
+		forearms = bots[bot]->findBodyPart("elbow");
+		elbows = bots[bot]->findBodyPart("forearm");
 		fingers = bots[bot]->findBodyPart("finger");
 		thighs = bots[bot]->findBodyPart("thigh");
 		forelegs = bots[bot]->findBodyPart("foreleg");
 		wrists = bots[bot]->findBodyPart("wristrotate");
+		necks = bots[bot]->findBodyPart("neckh");
 	}else{
 		upperarms = root->findBodyPart("upperarm");
-		forearms = root->findBodyPart("forearm");
+		forearms = root->findBodyPart("elbow");
+		elbows = root->findBodyPart("forearm");
 		fingers = root->findBodyPart("finger");
 		thighs = root->findBodyPart("thigh");
 		forelegs = root->findBodyPart("foreleg");
 		wrists = root->findBodyPart("wristrotate");
+		necks = bots[bot]->findBodyPart("neckh");
 	}
 }
 
@@ -112,6 +118,7 @@ void saveState(){
 }
 
 void punch(size_t u){
+	// make fist
 	if (upperarms.size()>u){
 		fings = upperarms[u]->findBodyPart("finger");
 		if (fings.size()>u) {
@@ -120,37 +127,63 @@ void punch(size_t u){
 		}
 	}
 
+	// pull upperarm and then push
 	if (upperarms.size()>u){
 		thread t1(&node::angleDecreaseToAsync, upperarms[u], -45.f, 0, 1300,  0.5f);		
 		t1.detach();
-		thread t2(&node::angleIncreaseToAsync, upperarms[u], 85.f, 1500, 500, 0.5f);		
+		thread t2(&node::angleIncreaseToAsync, upperarms[u], 110.f, 1500, 500, 0.5f);		
 		t2.detach();
 	}
 
+	// rotate elbow
+	if (elbows.size()>u){
+		if (u==0){
+			thread t2(&node::angleIncreaseToAsync, elbows[u], 30.f, 1500, 400, 0.5f);		
+			t2.detach();
+		}else {
+			thread t2(&node::angleDecreaseToAsync, elbows[u], -30.f, 1500, 400, 0.5f);		
+			t2.detach();
+		}
+	}
+
+	// pull forearm and then punch
 	if (forearms.size()>u) {
 		thread t1(&node::angleIncreaseToAsync, forearms[u], 135.f, 0, 1500,  0.5f);		
 		t1.detach();
+		
 		thread t2(&node::angleDecreaseToAsync, forearms[u], 0.f, 1500, 500, 0.5f);		
 		t2.detach();
+		
 	}
 
+	// rotate wrist
 	if (wrists.size()>u) {
 		bool left = u==0?true:false;
 		thread t1(&node::rotateWristAsync, wrists[u], true, left, 1500, 300);		
 		t1.detach();
 	}
+
+	// translate bot to opponent 
 	if (bots.size()>bot) {
-		int nextbot = (bot+1)%(bots.size());	
+		int nextbot = (bot+1)%(bots.size());
 		thread t1(&node::translateBotAsync, bots[bot], bots[nextbot], 1500, 300, 0.01f);		
 		t1.detach();
 	}
 	
+	// rotate bot facing opponent
 	if (bots.size()>bot) {
 		int nextbot = (bot+1)%(bots.size());	
 		if (bots[bot]->children.size() >0 && bots[bot]->children.size() >0){
 			thread t1(&node::rotateBotAsync, bots[bot]->children[0], bots[nextbot]->children[0], 1500, 300, 0.01f);		
 			t1.detach();
 		}
+	}
+
+	// Impact
+	vector<node*> nextBotNecks = bots[(bot+1)%bots.size()]->findBodyPart("neckh");
+	if (nextBotNecks.size()){
+		thread t1(&node::angleIncreaseToAsync, nextBotNecks[0], 45.f, 1800, 300, 0.01f);
+		t1.detach();
 	}
 }
 
@@ -173,10 +206,27 @@ void releasePunch(size_t u){
 		thread t1(&node::angleIncreaseToAsync, forearms[u], 15.f, 0, releaseTime,  0.5f);		
 		t1.detach();
 	}
+	if (elbows.size()>u){
+		if (u==0){
+			thread t1(&node::angleDecreaseToAsync, elbows[u], 0.f, 0, releaseTime,  0.5f);		
+			t1.detach();
+		}else{
+			thread t1(&node::angleIncreaseToAsync, elbows[u], 0.f, 0, releaseTime,  0.5f);		
+			t1.detach();
+		}
+	}
+		
 
 	if (wrists.size()>u) {
 		bool left = u==0?true:false;
 		thread t1(&node::rotateWristAsync, wrists[u], false, left, 0, releaseTime);		
+		t1.detach();
+	}
+
+	vector<node*> nextBotNecks = bots[(bot+1)%bots.size()]->findBodyPart("neckh");
+	if (nextBotNecks.size()){
+		cout<<"HaHA";
+		thread t1(&node::angleDecreaseToAsync, nextBotNecks[0], 15.f, 0,releaseTime*2, 0.01f);
 		t1.detach();
 	}
 }
@@ -343,10 +393,8 @@ void keySpecialOperations(void) {
 void keyPressed (unsigned char key, int x, int y) {  
 	keyStates[key] = true; // Set the state of the current key to pressed 
 	if (glutGetModifiers() & GLUT_ACTIVE_SHIFT){
-		cout<<"SHIFT DOWN";
 		SHIFT = true;
 	}else {
-		cout<<"SHIFT UP";
 		SHIFT = false;
 	}
 	if (glutGetModifiers() & GLUT_ACTIVE_CTRL){

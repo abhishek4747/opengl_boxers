@@ -266,18 +266,25 @@ public:
 			//offz = (abs(mbz-nbz)>=1.f)?(nbz<mbz?1.f:-1.f):((nbz-mbz)*1.f);
 			offz = -1.f*cos(degreeToRadian(nextbot->children[0]->angle));
 		}
-		int t = (int)(1.f/scale);
+		int t,st;
+		t = st = (int)(1.f/scale);
 		int speed = (int)(ms/t);
+		float s = scale/2.f;
 		while(t--){
-			mybot->tx -= scale*mbx;
-			mybot->ty -= scale*mby;
-			mybot->tz -= scale*mbz;
-			mybot->tx += scale*nbx;
-			mybot->ty += scale*nby;
-			mybot->tz += scale*nbz;
-			mybot->tx += scale*offx;
-			mybot->ty += scale*offy;
-			mybot->tz += scale*offz;
+			if (t<st/2){
+				s -= 2*scale/st;
+			}else{
+				s += 2*scale/st;
+			}
+			mybot->tx -= s*mbx;
+			mybot->ty -= s*mby;
+			mybot->tz -= s*mbz;
+			mybot->tx += s*nbx;
+			mybot->ty += s*nby;
+			mybot->tz += s*nbz;
+			mybot->tx += s*offx;
+			mybot->ty += s*offy;
+			mybot->tz += s*offz;
 			Sleep(speed);
 		}
 	}
