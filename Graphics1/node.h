@@ -259,9 +259,13 @@ public:
 		Sleep(waittime);
 		float mbx = mybot->tx, mby = mybot->ty, mbz = mbz = mybot->tz;
 		float nbx = nextbot->tx, nby = nextbot->ty, nbz = nextbot->tz;
-		float offx = 0.f, 
-			offy = 0.f, 
-			offz = 1.f;
+		float offy = 0.f;
+		float offx, offz;
+		if (nextbot->children.size()){
+			offx = 1.f*sin(degreeToRadian(nextbot->children[0]->angle)); 
+			//offz = (abs(mbz-nbz)>=1.f)?(nbz<mbz?1.f:-1.f):((nbz-mbz)*1.f);
+			offz = -1.f*cos(degreeToRadian(nextbot->children[0]->angle));
+		}
 		int t = (int)(1.f/scale);
 		int speed = (int)(ms/t);
 		while(t--){
@@ -271,13 +275,23 @@ public:
 			mybot->tx += scale*nbx;
 			mybot->ty += scale*nby;
 			mybot->tz += scale*nbz;
-			if (mbx>0) mybot->tx += scale*offx;
-			else mybot->tx -= scale*offx;
-			if (mby>0) mybot->ty += scale*offy;
-			else mybot->ty -= scale*offy;
-			if (mbz>0) mybot->tz += scale*offz;
-			else mybot->tz -= scale*offz;
+			mybot->tx += scale*offx;
+			mybot->ty += scale*offy;
+			mybot->tz += scale*offz;
+			Sleep(speed);
+		}
+	}
 
+	void static rotateBotAsync(node *mybot, node *nextbot, int waittime = 0, int ms = 2000, float scale = 0.1f){
+		Sleep(waittime);
+		float mba = mybot->angle;
+		float nba = nextbot->angle;
+		float a = (nba-mba>=180.f)?nba-mba-360.f:((nba-mba<-180)?nba-mba+360:(nba - mba)); 
+		int t = (int)(1.f/scale);
+		int speed = (int)(ms/t);
+		while(t--){
+			mybot->angle += scale*a;
+			mybot->angle += scale*180;
 			Sleep(speed);
 		}
 	}

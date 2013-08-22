@@ -144,6 +144,14 @@ void punch(size_t u){
 		thread t1(&node::translateBotAsync, bots[bot], bots[nextbot], 1500, 300, 0.01f);		
 		t1.detach();
 	}
+	
+	if (bots.size()>bot) {
+		int nextbot = (bot+1)%(bots.size());	
+		if (bots[bot]->children.size() >0 && bots[bot]->children.size() >0){
+			thread t1(&node::rotateBotAsync, bots[bot]->children[0], bots[nextbot]->children[0], 1500, 300, 0.01f);		
+			t1.detach();
+		}
+	}
 }
 
 void releasePunch(size_t u){
