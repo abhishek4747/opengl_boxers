@@ -88,6 +88,9 @@
     <ClInclude Include="functions.h" />
     <ClInclude Include="node.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="node.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
